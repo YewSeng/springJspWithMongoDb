@@ -1,0 +1,54 @@
+/* Custom CSS */
+#previous-button:hover,
+#next-button:hover,
+#filter-button:hover,
+#update-button:hover,
+#delete-button:hover {
+    background-color: hotpink; /* Change to hot pink color on hover */
+}
+
+#previous-button,
+#next-button,
+#filter-button,
+#update-button,
+#delete-button {
+    color: black; /* Set default text color to black */
+    font-weight: bold;
+}
+
+h1 {
+    text-align: center;
+}
+
+body {
+    display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    margin: 0; /* Remove default margin */
+}
+
+.center-container {
+    position: relative; /* Change position to relative */
+    width: 90%;
+    max-width: 1000px;
+    padding: 10px;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 50px; /* Add margin top for spacing */
+    margin-bottom: 50px; /* Add margin bottom for spacing */
+}
+
+.pagination-form {
+    display: inline;
+}
+
+.highlight-created {
+	background-color: #dff0d8; /* Light green background color */
+}
+.highlight-updated {
+	background-color: #fff3cd; /* Light yellow background color */
+}
+.highlight-deleted {
+	background-color: #f8d7da; /* Light red background color */
+}
