@@ -55,7 +55,7 @@
                     <c:if test="${not empty errorMessage}">
                         <div class="error-message alert alert-danger" id="error-message"><b>${errorMessage}</b></div>
                     </c:if>
-                    <form action="<c:url value='/api/v1/doctors/updateDoctor/${doctor.doctorId}' />" method="POST" onsubmit="return validateForm()">
+                    <form action="<c:url value='/api/v1/admins/updateDoctor/${doctor.doctorId}' />" method="POST" onsubmit="return validateForm()">
                         <!-- Hidden input field to specify the HTTP method as PUT -->
                         <input type="hidden" name="_method" value="PUT">
                         <!-- Input fields for doctor details -->

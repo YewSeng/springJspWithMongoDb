@@ -29,7 +29,7 @@ public class JwtGeneratorValidator {
     
     @Value("${jwt.secretKey}")
     private String SECRET;
-
+    
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -59,13 +59,18 @@ public class JwtGeneratorValidator {
         Map<String, Object> claims = new HashMap<>();
         return createToken(claims, authentication);
     }
+    
+    public String generateRefreshToken(Authentication authentication) {
+        Map<String, Object> claims = new HashMap<>();
+        return createRefreshToken(claims, authentication);
+    }
 
     public String createToken(Map<String, Object> claims, Authentication authentication) {
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         String role = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
-
+        
         return Jwts.builder()
                 .claim("role", role)
                 .setSubject(authentication.getName())
@@ -75,6 +80,21 @@ public class JwtGeneratorValidator {
                 .compact();
     }
 
+    public String createRefreshToken(Map<String, Object> claims, Authentication authentication) {
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        String role = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
+        return Jwts.builder()
+                .claim("role", role)
+                .setSubject(authentication.getName())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(60))) 
+                .signWith(SignatureAlgorithm.HS256, SECRET)
+                .compact();
+    }
+    
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));

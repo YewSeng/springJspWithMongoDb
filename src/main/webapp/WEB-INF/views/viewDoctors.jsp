@@ -48,7 +48,7 @@
 		        <br><b>DoctorID:</b> ${deletedDoctor.doctorId}, <b>Name:</b> ${deletedDoctor.name}, <b>Username:</b> ${deletedDoctor.username}
 		    </div>
 		</c:if>
-		<form action="/api/v1/doctors/filter" method="GET" id="filterForm" class="form-inline mb-3">
+		<form action="/api/v1/admins/filterDoctors" method="GET" id="filterForm" class="form-inline mb-3">
 		    <label for="searchType" class="mr-2"><b>Search By:</b></label>
 		    <select name="searchType" id="searchType" class="form-control mr-2">
 		        <option value="name">Name</option>
@@ -122,14 +122,14 @@
 				        </td>
 				        <td>
 				            <!-- Update Doctor button -->
-				            <c:url var="updateDoctorUrl" value="/api/v1/doctors/editDoctor/${doctor.doctorId}" />
+				            <c:url var="updateDoctorUrl" value="/api/v1/admins/editDoctor/${doctor.doctorId}" />
 				            <form action="${updateDoctorUrl}">
 				                <button type="submit" id="update-button" class="btn btn-warning btn-center">Update</button>
 				            </form>
 				        </td>
 				        <td>
 				            <!-- Delete Doctor button -->
-				            <c:url var="deleteDoctorUrl" value="/api/v1/doctors/deleteDoctor/${doctor.doctorId}" />
+				            <c:url var="deleteDoctorUrl" value="/api/v1/admins/deleteDoctor/${doctor.doctorId}" />
 				            <form action="${deleteDoctorUrl}" method="POST">
 				                <input type="hidden" name="_method" value="DELETE" />
 				                <button type="submit" id="delete-button" class="btn btn-danger btn-center">Delete</button>
@@ -144,10 +144,10 @@
 		    <c:if test="${pageNumber > 0}">
 		        <form action="<c:choose>
 		                          <c:when test="${not empty param.searchType}">
-		                              /api/v1/doctors/filter
+		                              /api/v1/admins/filterDoctors
 		                          </c:when>
 		                          <c:otherwise>
-		                              /api/v1/doctors/getAllDoctors
+		                              /api/v1/admins/getAllDoctors
 		                          </c:otherwise>
 		                      </c:choose>"
 		              method="GET" class="pagination-form">
@@ -171,10 +171,10 @@
 		    <c:if test="${pageNumber < totalPages - 1}">
 		        <form action="<c:choose>
 		                          <c:when test="${not empty param.searchType}">
-		                              /api/v1/doctors/filter
+		                              /api/v1/admins/filterDoctors
 		                          </c:when>
 		                          <c:otherwise>
-		                              /api/v1/doctors/getAllDoctors
+		                              /api/v1/admins/getAllDoctors
 		                          </c:otherwise>
 		                      </c:choose>"
 		              method="GET" class="pagination-form">

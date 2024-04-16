@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.caltech.exception.AdminNotFoundException;
+import com.caltech.exception.BookingNotFoundException;
 import com.caltech.exception.DoctorNotFoundException;
 import com.caltech.exception.PetNotFoundException;
 import com.caltech.exception.UserNotFoundException;
@@ -41,6 +42,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PetNotFoundException.class)
     public ModelAndView handlePetNotFoundException(PetNotFoundException ex) {
         ModelAndView mv = new ModelAndView("petNotFound");
+        mv.addObject("errorMessage", ex.getMessage());
+        return mv;
+    }
+    
+    @ExceptionHandler(BookingNotFoundException.class)
+    public ModelAndView handleBookingNotFoundException(BookingNotFoundException ex) {
+        ModelAndView mv = new ModelAndView("bookingNotFound");
         mv.addObject("errorMessage", ex.getMessage());
         return mv;
     }

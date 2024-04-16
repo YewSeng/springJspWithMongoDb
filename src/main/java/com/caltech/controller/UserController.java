@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,12 +27,24 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
 import com.caltech.config.JwtGeneratorValidator;
+import com.caltech.constants.Species;
+import com.caltech.constants.Status;
 import com.caltech.exception.UserNotFoundException;
 import com.caltech.exception.UsernameAlreadyExistException;
+import com.caltech.pojo.Pet;
 import com.caltech.pojo.User;
+import com.caltech.service.BookingService;
+import com.caltech.service.PetService;
 import com.caltech.service.UserService;
 import com.caltech.utils.UserPage;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+
 import com.caltech.utils.CustomPageable;
+import com.caltech.utils.PetPage;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,89 +53,124 @@ import lombok.extern.slf4j.Slf4j;
 public class UserController {
 	
 	private UserService userService;
+	private PetService petService;
+	private BookingService bookingService;
 	private JwtGeneratorValidator jwtValidator;
 	private static final int DEFAULT_PAGE_SIZE = 5;
 	
+    @Value("${jwt.secretKey}")
+    private String SECRET;
+    
     @Autowired
-    public UserController(UserService userService, JwtGeneratorValidator jwtValidator) {
+    public UserController(UserService userService, PetService petService, BookingService bookingService, JwtGeneratorValidator jwtValidator) {
         this.userService = userService;
+        this.petService = petService;
+        this.bookingService = bookingService;
         this.jwtValidator = jwtValidator;
     }
     
-    private String validateName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            return "Name cannot be empty";
-        } else if (name.trim().length() < 4) {
-            return "Name must be at least 4 characters long";
-        } else if (!name.matches("^[a-zA-Z ]{4,}$")) {
-            return "Name must be at least 4 characters long and contain only letters";
+    private String validatePetName(String petName) {
+        if (petName == null || petName.trim().isEmpty()) {
+            return "Pet Name cannot be empty";
+        } else if (petName.trim().length() < 4) {
+            return "Pet Name must be at least 4 characters long";
+        } else if (!petName.matches("^[a-zA-Z ]{4,}$")) {
+            return "Pet Name must be at least 4 characters long and contain only letters";
         } else {
             return ""; // No error
         }
     }
 
-    private String validateUsername(String username) {
-        if (!username.matches("^U[a-zA-Z0-9]{7,}$")) {
-            return "Username must start with an uppercase 'U' followed by at least 7 characters";
-        } else {
-            return ""; // No error
+    private String validatePetAge(String petAge) {
+        if (petAge == null || petAge.trim().isEmpty()) {
+            return "Age cannot be empty";
         }
-    }
-
-    private String validatePassword(String password) {
-        if (!password.matches("^(?=.*[A-Z])(?=.*[@])(?=.*[0-9])[a-zA-Z0-9@]{8,}$")) {
-            return "Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 '@', and 1 number";
-        } else {
-            return ""; // No error
+        if (!petAge.matches("^\\d+(\\.\\d+)?$")) {
+            return "Age must contain only digits (allowed decimal)";
         }
+        double age = Double.parseDouble(petAge);
+        if (age < 0) {
+            return "Age cannot be negative";
+        } else if (age == 0) {
+        	return "Age cannot be 0";
+        } else if (age > 20) {
+        	return "Age cannot be above 20";
+        }
+        return "";
     }
     
-    private String validateForm(String name, String username, String password) {
+    private String validatePetType(String petType) {
+    	if (petType == null || petType.trim().isEmpty()) {
+    		return "Pet Type cannot be null";
+    	}
+    	return "";
+    }
+    
+    private String validateUserId(String userId) {
+    	if (userId == null || userId.trim().isEmpty()) {
+    		return "User Id cannot be null";
+    	}
+    	return "";
+    }
+    
+    private String validatePetForm(String petName, String petType, String petAge, String userId) {
         // Regular expressions for validation
-    	String nameRegex = "^[a-zA-Z ]{4,}$";
-        String usernameRegex = "^U[a-zA-Z0-9]{7,}$"; // Username must start with "U" (upper case) and followed by be at least 7 characters and contain only letters and numbers
-        String passwordRegex = "^(?=.*[A-Z])(?=.*[@])(?=.*[0-9])[a-zA-Z0-9@]{8,}$"; // Password: At least 1 uppercase, 1 "@", 1 number, At least length 8
+    	String petNameRegex = "^[a-zA-Z ]{4,}$";
+    	String petAgeRegex = "^\\d+(\\.\\d+)?$";
 
         // Validation checks
         StringBuilder errorMessage = new StringBuilder();
 
-        if (name == null || name.trim().isEmpty()) {
-            errorMessage.append("Name cannot be empty\n");
-        } else if (name.trim().length() < 4) {
-            errorMessage.append("Name must be at least 4 characters long\n");
-        } else if (!name.matches(nameRegex)) {
-            errorMessage.append("Name must contain only letters\n");
+        if (petName == null || petName.trim().isEmpty()) {
+            errorMessage.append("Pet Name cannot be empty\n");
+        } else if (petName.trim().length() < 4) {
+            errorMessage.append("Pet Name must be at least 4 characters long\n");
+        } else if (!petName.matches(petNameRegex)) {
+            errorMessage.append("Pet Name must contain only letters\n");
         }
-        if (!username.matches(usernameRegex)) {
-            errorMessage.append("Username must start with an uppercase 'U' followed by at least 7 characters\n");
+        if (petAge == null || petAge.trim().isEmpty()) {
+            errorMessage.append("Pet Age cannot be null\n");
+        } else if (!petAge.matches(petAgeRegex)) {
+        	errorMessage.append("Pet Age must contain only digits (allowed decimal)\n");
         }
-        if (!password.matches(passwordRegex)) {
-            errorMessage.append("Password must be at least 8 characters long, contain at least 1 uppercase letter, 1 '@', and 1 number\n");
+        double age = Double.parseDouble(petAge);
+        if (age < 0) {
+        	errorMessage.append("Pet Age cannot be negative\n");
+        } else if (age == 0) {
+        	errorMessage.append("Pet Age cannot be 0\n");
+        } else if (age > 20) {
+        	errorMessage.append("Pet Age cannot be above 20\n");
+        }
+        if (userId == null || userId.trim().isEmpty()) {
+        	errorMessage.append("User Id cannot be null\n");
+        }
+        if (petType == null || petType.trim().isEmpty()) {
+            errorMessage.append("Pet Type cannot be null\n");
         }
 
         return errorMessage.toString();
     }
     
-    private int calculatePageNumberForUser(User user) {
+    private int calculatePageNumberForPetOwners(ObjectId userId, Pet pet) {
         int pageSize = DEFAULT_PAGE_SIZE;
         int pageNumber = 0;
-        boolean userFound = false;
+        boolean petFound = false;
 
-        while (!userFound) {
-            // Fetch users for the current page number
-            UserPage userPage = userService.findAllUsers(new UserPage(pageNumber, pageSize));
-            List<User> users = userPage.getContent();
+        while (!petFound) {
+            // Fetch pets for the current page number
+            PetPage petPage = petService.findPetsByUserId(userId, new PetPage(pageNumber, pageSize));
+            List<Pet> pets = petPage.getContent();
 
-            // Check if the user is in the current page
-            if (users.contains(user)) {
-                userFound = true;
+            // Check if the pet is in the current page
+            if (pets.contains(pet)) {
+                petFound = true;
             } else {
-                // If user not found, increment the page number
+                // If pet not found, increment the page number
                 pageNumber++;
 
                 // Break the loop if we have reached the last page
-                if (pageNumber >= userPage.getTotalPages()) {
-                    pageNumber = -1; // Indicate user not found
+                if (pageNumber >= petPage.getTotalPages()) {
+                    pageNumber = -1; // Indicate pet not found
                     break;
                 }
             }
@@ -148,20 +197,62 @@ public class UserController {
         return null;
     }
 
+    private boolean isUser(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        if (token != null) {
+            try {
+                // Parse the token to extract claims
+                Claims claims = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody();
+                
+                // Check if the token contains the "role" claim and its value is "ROLE_USER"
+                if (claims.containsKey("role")) {
+                    String role = (String) claims.get("role");
+                    log.info("Role: {}", role);
+                    return role.equals("ROLE_USER");
+                }
+            } catch (JwtException e) {
+                // Handle JWT parsing exceptions
+                log.error("Error parsing JWT token: {}", e.getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+    
     @GetMapping("/home")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public ModelAndView goToUserHomePage(HttpServletRequest request, HttpServletResponse response) {
         log.info("Entered into the /home request");
         ModelAndView mv = new ModelAndView();
-        mv.setViewName("userHome");
-        log.info("Went to userHome.jsp page");
+        
+        // Check if the user is authorized
+        if (!isUser(request)) {
+            // Invalidate session and clear tokens
+            request.getSession().invalidate();
+            response.setHeader("Authorization", "");
+            // Redirect to index page with error message
+            mv.setViewName("redirect:");
+            mv.addObject("errorMessage", "Unauthorized access. Please login again.");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return mv;
+        }        
 
         // Extract the token from the request cookie
         String token = extractTokenFromRequest(request);
+        log.info("Extracted token from request: {}", token);
+        mv.setViewName("userHome");
+        log.info("Went to userHome.jsp page");
 
         if (token != null) {
             // Parse the token to extract the username
             String username = jwtValidator.extractUsername(token);
             mv.addObject("username", username);
+            Optional<User> userOptional = userService.findUserByUsername(username);
+            if (userOptional.isPresent()) {
+            	User user = userOptional.get();
+            	ObjectId userId = user.getUserId();
+            	mv.addObject("userId", userId);
+            }
         }
 
         // Set the response status to OK
@@ -169,298 +260,43 @@ public class UserController {
         return mv;
     }
 
-    
-	@GetMapping("/createUser")
-	public ModelAndView goToCreateUserPage(HttpServletRequest request, HttpServletResponse response) {
-		log.info("Entered into the /createUser request");
+	@GetMapping("/createPet/{userId}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ModelAndView goToCreatePetPage(@PathVariable ObjectId userId, HttpServletRequest request, HttpServletResponse response) {
+		log.info("Entered into the /createPet/{userId} request");
 		ModelAndView mv = new ModelAndView();
-		mv.setViewName("createUser");
-		log.info("Went to createUser.jsp page");
+		mv.setViewName("createPet");
+		log.info("Went to createPet.jsp page");
 	    // Get flash attributes and add them to the model
 	    Map<String, ?> flashMap = RequestContextUtils.getInputFlashMap(request);
-	    if (flashMap != null) {
-	        mv.addObject("name", flashMap.get("name"));
-	        mv.addObject("username", flashMap.get("username"));
-	        mv.addObject("password", flashMap.get("password"));
-	    }
+	    if (flashMap != null) {	        
+	        mv.addObject("petName", flashMap.get("petName"));
+	        mv.addObject("petAge", flashMap.get("petAge"));
+	        mv.addObject("userId", flashMap.get("userId"));
+	    }	    
+	    // Add Status enum values to the model
+	    mv.addObject("petType", Species.values());
 	    response.setStatus(HttpServletResponse.SC_OK);
 		return mv;
-	}
+    }
     
-	@PostMapping("/registerUser")
-	public ModelAndView createUser(@RequestParam String name,
-	                                @RequestParam String username,
-	                                @RequestParam String password,
-	                                HttpServletRequest request,
-	                                HttpServletResponse response,
-	                                RedirectAttributes redirectAttributes) {
-	    log.info("Entered into the /registerUser request");
+	@GetMapping("/registerPet/{userId}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+	public ModelAndView createPet(@RequestParam String petName,
+									@RequestParam String petType,
+									@RequestParam String petAge,
+									@RequestParam String userId,
+									HttpServletRequest request,
+									HttpServletResponse response,
+									RedirectAttributes redirectAttributes) {
+	    log.info("Entered into the /registerPet/{userId} request");
 	    ModelAndView mv = new ModelAndView();
-	    String nameError = "";
-	    String usernameError = "";
-	    String passwordError = "";
+	    String petNameError = "";
+	    String petTypeError = "";
+	    String petAgeError = "";
+	    String userIdError = "";
 	    int pageNumber = 0;
-	    try {
-	        // Perform form validation
-	        nameError = validateName(name);
-	        usernameError = validateUsername(username);
-	        passwordError = validatePassword(password);
-
-	        String errorMessage = validateForm(name, username, password);
-	        if (!errorMessage.isEmpty()) {
-	            throw new IllegalArgumentException(errorMessage);
-	        }
-
-	        if (!userService.verifyExistingUsername(username)) {
-	            User user = new User();
-	            user.setUserId(new ObjectId());
-	            user.setName(name);
-	            user.setUsername(username);
-	            user.setPassword(password);
-
-	            userService.createUser(user);
-	            Optional<User> createdUserOptional = userService.findUserByUsername(username);
-	            if (createdUserOptional.isPresent()) {
-	                User createdUser = createdUserOptional.get();
-	                pageNumber = calculatePageNumberForUser(createdUser);
-	                redirectAttributes.addFlashAttribute("createdUser", createdUser);
-	                redirectAttributes.addFlashAttribute("pageNumber", pageNumber);
-	            }
-	            // Add success message attribute
-	            redirectAttributes.addFlashAttribute("successMessage", "User created successfully.");
-	            // Redirect to filtered view based on the username
-	            mv.setViewName("redirect:/api/v1/users/getAllUsers?page=" + pageNumber + "&size=" + DEFAULT_PAGE_SIZE);
-	            response.setStatus(HttpServletResponse.SC_OK);
-	            return mv;
-	        } else {
-	            log.error("Username is already taken. Please try again!");
-	            throw new UsernameAlreadyExistException("Username is already taken. Please try again!");
-	        }
-	    } catch (IllegalArgumentException | UsernameAlreadyExistException e) {
-	    	log.error("Either username {} and/or fields: name: {}, username: {}, password: {}  do not match the basic fields requirements", username, name, username, password);
-	        redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-	        redirectAttributes.addFlashAttribute("nameError", nameError); 
-	        redirectAttributes.addFlashAttribute("usernameError", usernameError); 
-	        redirectAttributes.addFlashAttribute("passwordError", passwordError); 
-	        redirectAttributes.addFlashAttribute("name", name);
-	        redirectAttributes.addFlashAttribute("username", username);
-	        redirectAttributes.addFlashAttribute("password", password);
-	        mv.setViewName("redirect:/api/v1/users/createUser");
-	        response.setStatus(HttpServletResponse.SC_CONFLICT);
-	    }
+	    
 	    return mv;
 	}
-
-    @GetMapping("/getAllUsers")
-    public ModelAndView getAllUsers(@RequestParam(defaultValue = "0") int page,
-                                    @RequestParam(defaultValue = "5") int size,
-                                    HttpServletRequest request, 
-                                    HttpServletResponse response) {
-        log.info("Entered into the /getAllUsers request");
-        
-        CustomPageable<User> pageable = new UserPage(page, size); // Create CustomPageable object
-        UserPage customPage = userService.findAllUsers(pageable);
-        ModelAndView mv = new ModelAndView();
-        mv.setViewName("viewUsers");
-        mv.addObject("users", customPage.getContent());
-        mv.addObject("pageNumber", customPage.getPageNumber());
-        mv.addObject("pageSize", customPage.getPageSize());
-        mv.addObject("totalElements", customPage.getTotalElements());
-        mv.addObject("totalPages", customPage.getTotalPages());
-        response.setStatus(HttpServletResponse.SC_OK);
-        return mv;
-    }
-    
-    @GetMapping("/filter")
-    public ModelAndView filterUsers(@RequestParam("searchType") String searchType, 
-                                     @RequestParam("searchTerm") String searchTerm,
-                                     @RequestParam(defaultValue = "0") int page,
-                                     @RequestParam(defaultValue = "5") int size,
-                                     HttpServletRequest request, 
-                                     HttpServletResponse response) {
-    	
-        if (searchTerm.isEmpty()) {
-        	response.setStatus(HttpServletResponse.SC_OK);
-            return new ModelAndView("redirect:/api/v1/users/getAllUsers");
-        }
-        
-        CustomPageable<User> pageable = new UserPage(page, size); // Create CustomPageable object
-        UserPage filteredUsers;
-        if ("name".equals(searchType)) {
-            filteredUsers = userService.findUsersByName(searchTerm, pageable);
-        } else if ("username".equals(searchType)) {
-            filteredUsers = userService.findUsersByUsername(searchTerm, pageable);
-        } else {
-            // Default behavior: return all users
-            filteredUsers = userService.findAllUsers(pageable);
-        }
-        ModelAndView mv = new ModelAndView();
-        mv.setViewName("viewUsers"); // Set view name to the JSP page
-        mv.addObject("users", filteredUsers.getContent()); // Add filtered users to the model
-        mv.addObject("pageNumber", filteredUsers.getPageNumber()); // Add page number
-        mv.addObject("pageSize", filteredUsers.getPageSize()); // Add page size
-        mv.addObject("totalElements", filteredUsers.getTotalElements()); // Add total elements
-        mv.addObject("totalPages", filteredUsers.getTotalPages()); // Add total pages
-        response.setStatus(HttpServletResponse.SC_OK);
-        return mv;
-    }
-    
-    @GetMapping("/editUser/{userId}")
-    public ModelAndView goToUpdateUserPage(@PathVariable ObjectId userId, HttpServletRequest request, HttpServletResponse response) {
-        log.info("Entered into the /editUser/{userId} request for userId: {}", userId);
-        ModelAndView mv = new ModelAndView();
-        try {
-            // Retrieve user information based on the provided userId
-            Optional<User> userOptional = userService.findUserById(userId);
-            
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                
-                // Add the user object to the ModelAndView
-                mv.addObject("user", user);
-                
-                // Set the view name to the JSP page for updating user
-                mv.setViewName("editUser");
-	            response.setStatus(HttpServletResponse.SC_OK);
-                log.info("Went to update User page");
-            } else {
-                // If user not found, set view to userNotFound page
-                mv.setViewName("userNotFound");
-                mv.addObject("errorMessage", "User not found with userId: " + userId);
-                // Set HTTP status to 404 (Not Found)
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            }
-        } catch (Exception e) {
-            log.error("Error occurred while retrieving user with userId: {}", userId, e);
-            mv.setViewName("generalError");
-            mv.addObject("errorMessage", "An error occurred while retrieving user");
-            // Set HTTP status to 500 (Internal Server Error)
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-        return mv;
-    }
-    
-    @PutMapping("/updateUser/{userId}")
-    public ModelAndView updateUser(@PathVariable ObjectId userId,
-            @RequestParam String name,
-            @RequestParam String username,
-            @RequestParam String password,
-            HttpServletRequest request, 
-            HttpServletResponse response,
-            RedirectAttributes redirectAttributes) {
-        log.info("Entered into the /updateUser/{userId} request for userId: {}", userId);
-        ModelAndView mv = new ModelAndView();
-        User updatedUser = new User();
-		String nameError = "";
-	    String usernameError = "";
-	    String passwordError = "";
-	    int pageNumber = 0;
-        try {       
-            // Perform form validation
-	        nameError = validateName(name);
-	        usernameError = validateUsername(username);
-	        passwordError = validatePassword(password);
-			
-            String errorMessage = validateForm(name, username, password);
-            if (!errorMessage.isEmpty()) {
-                throw new IllegalArgumentException(errorMessage);
-            }
-			Optional<User> oldUserOptional = userService.findUserById(userId);
-			if (oldUserOptional.isPresent()) {
-				User oldUser = oldUserOptional.get();
-				redirectAttributes.addFlashAttribute("oldUser", oldUser);
-			}
-            updatedUser.setName(name);
-            updatedUser.setUsername(username);
-            updatedUser.setPassword(password);
-            
-            User user = userService.updateUser(userId, updatedUser);
-            
-            Optional<User> newUserOptional = userService.findUserById(userId);
-            if (newUserOptional.isPresent()) {
-				User newUser = newUserOptional.get();
-				pageNumber = calculatePageNumberForUser(user);
-	            redirectAttributes.addFlashAttribute("pageNumber", pageNumber);
-				redirectAttributes.addFlashAttribute("newUser", newUser);
-            }
-            // Set success message and redirect to getAllUsers
-            redirectAttributes.addFlashAttribute("successMessage", "User with user id " + userId + " is successfully updated."); 
-            // Redirect to filtered view based on the updated user's username
-            mv.setViewName("redirect:/api/v1/users/getAllUsers?page=" + pageNumber + "&size=" + DEFAULT_PAGE_SIZE);
-            response.setStatus(HttpServletResponse.SC_OK);
-        } catch (IllegalArgumentException | UsernameAlreadyExistException e) {
-            log.error("Either username {} and/or fields: name: {}, username: {}, password: {}  do not match the basic fields requirements", username, name, username, password);
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-	        redirectAttributes.addFlashAttribute("nameError", nameError); // Add nameError
-	        redirectAttributes.addFlashAttribute("usernameError", usernameError); // Add usernameError
-	        redirectAttributes.addFlashAttribute("passwordError", passwordError); // Add passwordError
-	        redirectAttributes.addFlashAttribute("name", name);
-	        redirectAttributes.addFlashAttribute("username", username);
-	        redirectAttributes.addFlashAttribute("password", password);
-            mv.addObject("user", updatedUser);
-            mv.setViewName("redirect:/api/v1/users/editUser/{userId}");
-            response.setStatus(HttpServletResponse.SC_CONFLICT);
-        } catch (UserNotFoundException e) {
-            log.error("User not found with userId: {}", userId);
-            mv.setViewName("userNotFound");
-            mv.addObject("errorMessage", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        } catch (Exception e) {
-            log.error("Error occurred while updating user with userId: {}", userId, e);
-            mv.setViewName("generalError");
-            mv.addObject("errorMessage", "An error occurred while updating user");
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-        return mv;
-    }
-
-    @DeleteMapping("/deleteUser/{userId}")
-    public ModelAndView deleteUser(@PathVariable ObjectId userId,
-                                    HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    RedirectAttributes redirectAttributes) {
-        log.info("Entered into the /deleteUser/{userId} request for userId: {}", userId);
-        ModelAndView mv = new ModelAndView();
-
-        try {
-            // Retrieve the user data before performing the delete operation
-            Optional<User> deletedUserOptional = userService.findUserById(userId);
-
-            if (deletedUserOptional.isPresent()) {
-                User deletedUser = deletedUserOptional.get();
-
-                // Perform the delete operation
-                userService.deleteUser(userId);
-                log.info("User with user ID: {} has been successfully deleted", userId);
-                redirectAttributes.addFlashAttribute("successMessage", "User deleted successfully.");
-                redirectAttributes.addFlashAttribute("deletedUser", deletedUser);
-
-                // Set the status to SC_OK when the user is successfully deleted
-                response.setStatus(HttpServletResponse.SC_OK);
-            } else {
-                redirectAttributes.addFlashAttribute("errorMessage", "User not found with userId: " + userId);
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            }
-
-            // Redirect to the referrer page if available
-            mv.setViewName("redirect:" + request.getHeader("referer"));
-            return mv;
-        } catch (UserNotFoundException e) {
-            log.error("User not found while deleting user with userId: {}", userId, e);
-            redirectAttributes.addFlashAttribute("errorMessage", "User not found with userId: " + userId);
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-
-            // Redirect to the referrer page if available
-            mv.setViewName("redirect:" + request.getHeader("referer"));
-            return mv;
-        } catch (Exception e) {
-            log.error("Error occurred while deleting user with userId: {}", userId, e);
-            redirectAttributes.addFlashAttribute("errorMessage", "An error occurred while deleting user: " + e.getMessage());
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-
-            // Redirect to the referrer page if available
-            mv.setViewName("redirect:" + request.getHeader("referer"));
-            return mv;
-        }
-    }
 }

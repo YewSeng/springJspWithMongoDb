@@ -5,7 +5,7 @@ import org.junit.platform.suite.api.Suite;
 
 @Suite
 @SelectClasses({AdminControllerTest.class, DefaultControllerTest.class, DoctorControllerTest.class, 
-	GlobalExceptionHandlerTest.class, 
+	GlobalExceptionHandlerTest.class, SuperAdminControllerTest.class,
 	UserControllerTest.class})
 public class GenericControllerLayerTest {
 

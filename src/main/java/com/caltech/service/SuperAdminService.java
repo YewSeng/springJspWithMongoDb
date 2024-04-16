@@ -15,7 +15,7 @@ public class SuperAdminService {
 
     public Boolean verifySuperAdminKey(String key) {
         log.info("Super Admin Key Entered: {}", key);
-        log.info("Correct super admin key: {}", superAdminKey);
+        log.info("Correct super admin key: {}", key.equals(superAdminKey));
         return key != null && key.trim().equals(superAdminKey.trim());
     }
 }

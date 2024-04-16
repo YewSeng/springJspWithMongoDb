@@ -47,7 +47,7 @@
 		    </div>
 		</c:if>
         <!-- Add form for filter -->
-		<form action="/api/v1/admins/filter" method="GET" class="form-inline mb-3">
+		<form action="/api/v1/superadmins/filter" method="GET" class="form-inline mb-3">
 		    <label for="searchType" class="mr-2"><b>Search By:</b></label>
 		    <select name="searchType" id="searchType" class="form-control mr-2">
 		        <option value="name">Name</option>
@@ -93,14 +93,14 @@
 				        <td><c:out value="${admin.username}" /></td>
 				        <td>
 				            <!-- Update Admin button -->
-				            <c:url var="updateAdminUrl" value="/api/v1/admins/editAdmin/${admin.adminId}" />
+				            <c:url var="updateAdminUrl" value="/api/v1/superadmins/editAdmin/${admin.adminId}" />
 				            <form action="${updateAdminUrl}">
 				                <button type="submit" id="update-button" class="btn btn-warning btn-center">Update</button>
 				            </form>
 				        </td>
 				        <td>
 				            <!-- Delete Admin button -->
-				            <c:url var="deleteAdminUrl" value="/api/v1/admins/deleteAdmin/${admin.adminId}" />
+				            <c:url var="deleteAdminUrl" value="/api/v1/superadmins/deleteAdmin/${admin.adminId}" />
 				            <form action="${deleteAdminUrl}" method="POST">
 				                <input type="hidden" name="_method" value="DELETE" />
 				                <button type="submit" id="delete-button" class="btn btn-danger btn-center">Delete</button>
@@ -115,10 +115,10 @@
 		    <c:if test="${pageNumber > 0}">
 		        <form action="<c:choose>
 		                          <c:when test="${not empty param.searchType}">
-		                              /api/v1/admins/filter
+		                              /api/v1/superadmins/filter
 		                          </c:when>
 		                          <c:otherwise>
-		                              /api/v1/admins/getAllAdmins
+		                              /api/v1/superadmins/getAllAdmins
 		                          </c:otherwise>
 		                      </c:choose>"
 		              method="GET" class="pagination-form">
@@ -142,10 +142,10 @@
 		    <c:if test="${pageNumber < totalPages - 1}">
 		        <form action="<c:choose>
 		                          <c:when test="${not empty param.searchType}">
-		                              /api/v1/admins/filter
+		                              /api/v1/superadmins/filter
 		                          </c:when>
 		                          <c:otherwise>
-		                              /api/v1/admins/getAllAdmins
+		                              /api/v1/superadmins/getAllAdmins
 		                          </c:otherwise>
 		                      </c:choose>"
 		              method="GET" class="pagination-form">

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.servlet.ModelAndView;
 import com.caltech.exception.AdminNotFoundException;
+import com.caltech.exception.BookingNotFoundException;
 import com.caltech.exception.DoctorNotFoundException;
 import com.caltech.exception.PetNotFoundException;
 import com.caltech.exception.UserNotFoundException;
@@ -72,6 +73,22 @@ public class GlobalExceptionHandlerTest {
         assertEquals("petNotFound", mv.getViewName());
         assertEquals("Pet not found", mv.getModel().get("errorMessage"));
     }
+    
+    @Test
+    @DisplayName("Test handleBookingNotFoundException method")
+    public void testHandleBookingNotFoundException() {
+        // Create an instance of BookingNotFoundException
+    	BookingNotFoundException ex = new BookingNotFoundException("Booking not found");
+
+        // Call the handleBookingNotFoundException method
+        GlobalExceptionHandler handler = new GlobalExceptionHandler();
+        ModelAndView mv = handler.handleBookingNotFoundException(ex);
+
+        // Verify the ModelAndView
+        assertEquals("bookingNotFound", mv.getViewName());
+        assertEquals("Booking not found", mv.getModel().get("errorMessage"));
+    }
+    
     @Test
     @DisplayName("Test handleGeneralException method")
     public void testHandleGeneralException() {

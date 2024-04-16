@@ -4,14 +4,14 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Admin Home Page</title>
+    <title>Super Admin Home Page</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/adminHome.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/superadminHome.css">
 </head>
 <body>
     <div class="center-container">
     	<div class="container-fluid">
-        	<h1 class="mt-4">Admin Dashboard</h1>
+        	<h1 class="mt-4">Super Admin Dashboard</h1>
         	<h3>Welcome Home, <span class="authenticated-user">${username}</span>!</h3>
 			<div class="row d-flex justify-content-center">
 				<div class="card">
@@ -23,10 +23,10 @@
                     <div class="card-footer">
                         <small class="text-muted">Last updated eons ago</small>
                         <div class="btn-group">
-                            <p><b>Create A User</b></p>
-                            <button class="btn btn-primary" id="createUser" onClick="window.location.href='<c:url value='/api/v1/admins/registerUser'/>';">Create a User</button>
-                            <p><b>View All Users</b></p>
-                            <button class="btn btn-secondary" id="viewUser" onClick="window.location.href='<c:url value='/api/v1/users/viewUsers'/>';">View Users</button>
+                            <p><b>Create An Admin</b></p>
+                            <button class="btn btn-primary" id="createAdmin" onClick="window.location.href='<c:url value='/api/v1/superadmins/registerAdmin'/>';">Create an Admin</button>
+                            <p><b>View All Admins</b></p>
+                            <button class="btn btn-secondary" id="viewAdmin" onClick="window.location.href='<c:url value='/api/v1/superadmins/viewAdmins'/>';">View Admins</button>
                         </div>
                     </div>
                 </div>

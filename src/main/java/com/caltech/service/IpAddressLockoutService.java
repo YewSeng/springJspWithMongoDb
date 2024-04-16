@@ -39,6 +39,14 @@ public class IpAddressLockoutService {
     public int getInvalidAttempts(String ipAddress) {
         return failedAttemptsMap.getOrDefault(ipAddress, 0);
     }
+    
+    public Long getLockoutEndTime(String ipAddress) {
+        return lockoutMap.get(ipAddress);
+    }
+    
+    public void setLockoutEndTime(String ipAddress, long lockoutEndTime) {
+        lockoutMap.put(ipAddress, lockoutEndTime);
+    }
 }
 
 

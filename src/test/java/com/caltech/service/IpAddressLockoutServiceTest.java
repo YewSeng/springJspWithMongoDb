@@ -3,6 +3,8 @@ package com.caltech.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -113,5 +115,57 @@ public class IpAddressLockoutServiceTest {
         // Increment attempts
         ipAddressLockoutService.incrementFailedAttempts(ipAddress);
         assertEquals(1, ipAddressLockoutService.getInvalidAttempts(ipAddress));
+    }
+    
+    @Test
+    @DisplayName("Test setAndGetLockoutEndTime")
+    public void testSetAndGetLockoutEndTime() {
+        // Set lockout end time for an IP address
+        String ipAddress = "192.168.0.1";
+        long lockoutEndTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10); // 10 minutes from now
+        ipAddressLockoutService.setLockoutEndTime(ipAddress, lockoutEndTime);
+
+        // Get lockout end time for the same IP address
+        Long retrievedLockoutEndTime = ipAddressLockoutService.getLockoutEndTime(ipAddress);
+
+        // Assert that the retrieved lockout end time matches the set lockout end time
+        assertEquals(lockoutEndTime, retrievedLockoutEndTime);
+
+        // Try to get lockout end time for a different IP address
+        String differentIpAddress = "192.168.0.2";
+        Long lockoutEndTimeForDifferentIp = ipAddressLockoutService.getLockoutEndTime(differentIpAddress);
+
+        // Assert that lockout end time for a different IP address is null
+        assertNull(lockoutEndTimeForDifferentIp);
+    }
+    
+    @Test
+    @DisplayName("Test getLockoutEndTime")
+    public void testGetLockoutEndTime() {
+        // Set lockout end time for an IP address
+        String ipAddress = "192.168.0.1";
+        long lockoutEndTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10); // 10 minutes from now
+        ipAddressLockoutService.setLockoutEndTime(ipAddress, lockoutEndTime);
+
+        // Get lockout end time for the same IP address
+        Long retrievedLockoutEndTime = ipAddressLockoutService.getLockoutEndTime(ipAddress);
+
+        // Assert that the retrieved lockout end time matches the set lockout end time
+        assertEquals(lockoutEndTime, retrievedLockoutEndTime);
+    }
+
+    @Test
+    @DisplayName("Test setLockoutEndTime")
+    public void testSetLockoutEndTime() {
+        // Set lockout end time for an IP address
+        String ipAddress = "192.168.0.1";
+        long lockoutEndTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10); // 10 minutes from now
+        ipAddressLockoutService.setLockoutEndTime(ipAddress, lockoutEndTime);
+
+        // Get lockout end time for the same IP address
+        Long retrievedLockoutEndTime = ipAddressLockoutService.getLockoutEndTime(ipAddress);
+
+        // Assert that the retrieved lockout end time matches the set lockout end time
+        assertEquals(lockoutEndTime, retrievedLockoutEndTime);
     }
 }

@@ -39,7 +39,11 @@ function validateForm() {
         // Enable the login button if there are no errors
         document.getElementById("submit-button").disabled = false;
     }
-
+    var loginDiv = document.getElementById("login-error");
+    if (loginDiv && loginDiv.innerText.trim() !== "") {
+        loginDiv.style.display = "block"; 
+    }
+    
     return errorMessage === ""; // Return true if no error messages, otherwise return false
 }
 

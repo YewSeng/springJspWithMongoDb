@@ -4,21 +4,21 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Create Admin</title>
+    <title>Registration</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/createAdmin.css">
-	<script src="${pageContext.request.contextPath}/js/adminFormValidation.js"></script>
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/createUser.css">
+	<script src="${pageContext.request.contextPath}/js/userFormValidation.js"></script>
 </head>
 <body>
     <div class="center-container">
-        <h1>Create Admin</h1>
+        <h1>Register as a User</h1>
         <%-- Display error message if exists --%>
         <c:if test="${not empty errorMessage}">
             <div class="error-message alert alert-danger" id="error-message"><b>${errorMessage}</b></div>
         </c:if>
-        <%-- Your form for creating a new admin --%>
-        <form action="<c:url value='/api/v1/superadmins/registerAdmin'/>" method="POST" onsubmit="return validateForm()">
-            <%-- Input fields for admin details --%>
+        <%-- Your form for creating a new user --%>
+        <form action="<c:url value='/registerUser'/>" method="POST" onsubmit="return validateForm()">
+            <%-- Input fields for user details --%>
             <div class="form-group">
                  <label for="name"><b>Name:</b></label>
                 <input type="text" class="form-control" id="name" name="name" value="${name}" required>

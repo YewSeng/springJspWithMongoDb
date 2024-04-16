@@ -17,7 +17,7 @@
             <div class="error-message alert alert-danger" id="error-message"><b>${errorMessage}</b></div>
         </c:if>
         <%-- Your form for creating a new user --%>
-        <form action="<c:url value='/api/v1/users/registerUser'/>" method="POST" onsubmit="return validateForm()">
+        <form action="<c:url value='/api/v1/admins/registerUser'/>" method="POST" onsubmit="return validateForm()">
             <%-- Input fields for user details --%>
             <div class="form-group">
                  <label for="name"><b>Name:</b></label>

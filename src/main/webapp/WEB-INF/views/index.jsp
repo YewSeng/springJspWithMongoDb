@@ -15,11 +15,30 @@
 <body>
     <div class="center-container">
     	<h1>Login Form</h1>
+    	<%-- Display success message if exists --%>
+        <c:if test="${not empty successMessage}">
+        	<div class="message-container">
+            	<div class="success-message alert alert-success" id="success-message"><b>${successMessage}</b></div>
+        	</div>
+        </c:if>
+        
     	<%-- Display error message if exists --%>
         <c:if test="${not empty errorMessage}">
             <div class="error-message alert alert-danger" id="error-message"><b>${errorMessage}</b></div>
         </c:if>
         
+        <%-- Display login error if exists --%>
+		<c:if test="${not empty loginError}">
+			<div class="error-message alert alert-danger" id="login-error">
+			    <b>${loginErrorMessage}</b>
+			</div>
+		</c:if>
+		
+		<%-- Display attempts remaining --%>
+		<c:if test="${remainingAttempts > 0}">
+			<p class="mt-3">Remaining attempts: ${remainingAttempts}</p>
+		</c:if>
+			
         <form action="<c:url value='/login'/>" method="POST" onsubmit="return validateForm()">
             <%-- Input fields for user details --%>
             <div class="form-group">
@@ -40,28 +59,19 @@
                 <input type="checkbox" class="form-check-input" id="showPassword" onclick="togglePasswordVisibility()">
                 <label class="form-check-label" for="showPassword"><b>Show Password</b></label>
             </div>
-            <button type="submit" id="submit-button" class="btn btn-primary btn-center">Login</button>
-            
-            <%-- Display login error if exists --%>
-			<c:if test="${not empty loginError}">
-			    <div class="fieldsError" id="login-error">
-			        <b>${loginErrorMessage}</b>
-			    </div>
-			</c:if>
-	        
-	        <%-- Display attempts remaining --%>
-			<c:if test="${remainingAttempts > 0}">
-			    <p class="mt-3">Remaining attempts: ${remainingAttempts}</p>
-			</c:if>
-			
-			<%-- Display timer left for next try --%>
-			<c:if test="${remainingAttempts == 0}">
-			    <p class="mt-3">You have exceeded the maximum number of attempts. Please try again later.</p>
-			    <p class="mt-3">Time left for form to be enabled: ${timerLeftForFormToNotBeDisabled} seconds</p>
-			</c:if>            
-            
+            <c:choose>
+			    <c:when test="${lockout}">
+			        <p class="mt-3">You have exceeded the maximum number of attempts. Please try again later.</p>
+			        <p class="mt-3">Time left for form to be enabled: ${timerLeftForFormToNotBeDisabled} seconds</p>
+			        <button type="button" id="submit-button" class="btn btn-primary btn-center" disabled>Login</button>
+			    </c:when>
+			    <c:otherwise>
+			        <button type="submit" id="submit-button" class="btn btn-primary btn-center">Login</button>
+			    </c:otherwise>
+			</c:choose>
+            	        			                      
             <!-- Registration Link -->
-            <p class="mt-3">Don't have an account? <a routerLink="/register">Register here</a></p>
+            <p class="mt-3">Don't have an account? <a href="/registration">Register here</a></p>
         </form>
     </div>
 </body>

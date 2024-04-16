@@ -25,7 +25,7 @@ public class SecurityConfig {
 
     @Autowired
     private DefaultUserService userDetailsService; // Authentication service
-    
+        
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
@@ -50,16 +50,26 @@ public class SecurityConfig {
     }
     
     @Bean
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return new ProviderManager(Collections.singletonList(authenticationProvider()));
+    }
+    
+    @Bean 
+    public SuperAdminAuthenticationFilter superAdminAuthenticationFilterBean() throws Exception {
+        return new SuperAdminAuthenticationFilter();
+    }
+    
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors().and().csrf().disable()
             .authorizeRequests()
-                .antMatchers("/css/**", "/js/**", "/registration", "/genToken", "/api/v1/users/**","/**","/favicon.ico", "/login", "/api/v1/**")
-                .permitAll() // Permit certain endpoints without authentication
+                .antMatchers("/css/**", "/js/**", "/registration", "/registerUser", "/superAdminLogin", "/hidden","/favicon.ico", "/login", "/")
+                .permitAll()// Permit certain endpoints without authentication
                 .anyRequest().authenticated() // Require authentication for all other endpoints
                 .and()
             .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS); // Set session management to stateless
-
+        http.addFilterBefore(superAdminAuthenticationFilterBean(), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(authenticationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class); // Add JWT filter
         return http.build();
     }

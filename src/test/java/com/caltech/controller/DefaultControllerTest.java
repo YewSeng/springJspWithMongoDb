@@ -57,8 +57,7 @@ public class DefaultControllerTest {
         HttpServletResponse response = mock(HttpServletResponse.class);
 
         // Call the defaultPage method
-        DefaultController controller = new DefaultController(jwtValidator/*, authenticationManager*/, defaultUserServiceImplementation, 
-        		superAdminService, adminService, doctorService, userService);
+        DefaultController controller = new DefaultController();
         ModelAndView mv = controller.goToIndexPage(request, response);
 
         // Verify the ModelAndView
