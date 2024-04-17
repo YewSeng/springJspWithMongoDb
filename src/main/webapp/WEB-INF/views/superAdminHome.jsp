@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <title>Super Admin Home Page</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/superadminHome.css">
+	<link rel="stylesheet" href="${pageContext.request.contextPath}/css/superAdminHome.css">
 </head>
 <body>
     <div class="center-container">
@@ -24,9 +24,9 @@
                         <small class="text-muted">Last updated eons ago</small>
                         <div class="btn-group">
                             <p><b>Create An Admin</b></p>
-                            <button class="btn btn-primary" id="createAdmin" onClick="window.location.href='<c:url value='/api/v1/superadmins/registerAdmin'/>';">Create an Admin</button>
+                            <button class="btn btn-primary" id="createAdmin" onClick="window.location.href='<c:url value='/api/v1/superadmins/createAdmin'/>';">Create an Admin</button>
                             <p><b>View All Admins</b></p>
-                            <button class="btn btn-secondary" id="viewAdmin" onClick="window.location.href='<c:url value='/api/v1/superadmins/viewAdmins'/>';">View Admins</button>
+                            <button class="btn btn-secondary" id="viewAdmin" onClick="window.location.href='<c:url value='/api/v1/superadmins/getAllAdmins'/>';">View Admins</button>
                         </div>
                     </div>
                 </div>

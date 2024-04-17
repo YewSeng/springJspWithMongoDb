@@ -1,5 +1,6 @@
 package com.caltech.controller;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
@@ -344,17 +346,16 @@ public class DefaultController {
 	                Authentication authentication = authenticationManager.authenticate(
 	                		new UsernamePasswordAuthenticationToken(superAdminKey, null));
 	                log.info("Authentication: {}", authentication);
-	                SecurityContextHolder.getContext().setAuthentication(authentication);
-	                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 	                if (isSuperAdmin) {
-	                    // Reset login attempts on successful login
-	                    ipAddressLockoutService.resetFailedAttempts(ipAddress);
-	                    // Extract roles from user details
-	                    List<String> roles = userDetails.getAuthorities().stream()
-	                            .map(GrantedAuthority::getAuthority)
-	                            .collect(Collectors.toList());
-	                    // Log the roles
-	                    log.info("User roles: {}", roles);
+	                    // Create authentication token with super admin details
+	                    UserDetails userDetails = new org.springframework.security.core.userdetails.User("Super Admin", "", Collections.singletonList(new SimpleGrantedAuthority("ROLE_SUPERADMIN")));
+	                    UsernamePasswordAuthenticationToken authenticationToken =
+	                            new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+	                    
+	                    // Set authentication in SecurityContextHolder
+	                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+	                 // Log authentication status
+	                    log.info("Is Super Admin authenticated: {}", SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
 	                    // Generate JWT token
 	                    String token = jwtValidator.generateToken(authentication);
 	                    log.info("JWT TOKEN: {}", token);

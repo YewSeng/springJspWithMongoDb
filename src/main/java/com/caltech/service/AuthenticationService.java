@@ -1,10 +1,16 @@
 package com.caltech.service;
 
+import java.util.Collections;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
@@ -84,15 +90,17 @@ public class AuthenticationService {
         log.info("Authenticating Super Admin with Super Admin Key: {}", superAdminKey);
         // Check if the provided key matches the predefined Super Admin key
         if (superAdminKey.equals(this.superAdminKey)) {
-            // Create authentication token with superadmin details
-            UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(superAdminKey, null);
-            // Authenticate using AuthenticationManager
+            // Attempt authentication
             try {
+                // Create authentication token with super admin details
+                UserDetails userDetails = new User(superAdminKey, "", Collections.singletonList(new SimpleGrantedAuthority("ROLE_SUPERADMIN")));
+                UsernamePasswordAuthenticationToken authenticationToken =
+                        new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
                 Authentication authentication = authenticationManager.authenticate(authenticationToken);
-                // If authentication is successful, check if user has ROLE_SUPERADMIN authority
-                return authentication.getAuthorities().stream()
-                        .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_SUPERADMIN"));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info("authenticationToken: {}", authenticationToken);
+                log.info("authentication: {}", authentication);
+                return authentication.isAuthenticated();
             } catch (AuthenticationException e) {
                 log.error("Super Admin authentication failed", e);
                 return false;

@@ -265,6 +265,7 @@ public class AdminController {
         ModelAndView mv = new ModelAndView();
         
         // Check if the user is authorized
+        log.info("Is Super Admin: {}", isAdmin(request));
         if (!isAdmin(request)) {
             // Invalidate session and clear tokens
             request.getSession().invalidate();

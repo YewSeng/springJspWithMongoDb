@@ -42,8 +42,8 @@ public class DefaultUserServiceImplementation implements DefaultUserService {
         if (superAdminSecretKey.equals(username)) {
             List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("ROLE_SUPERADMIN");
             return new org.springframework.security.core.userdetails.User(
-                    username,
-                    superAdminSecretKey,
+            		"Super Admin",
+                    "",
                     authorities
             );
         }

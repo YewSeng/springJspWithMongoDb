@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import com.caltech.service.DefaultUserService;
 import io.jsonwebtoken.ExpiredJwtException;
-
 import javax.servlet.http.Cookie;
 
 @Component
@@ -31,6 +31,9 @@ public class JwtFilter extends OncePerRequestFilter {
 	
     @Autowired
     private AuthenticationManager authenticationManager;
+       
+    @Value("${superadmin.secretKey}")
+    private String superAdminKey;
     
     private String extractTokenFromCookie(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
@@ -104,24 +107,26 @@ public class JwtFilter extends OncePerRequestFilter {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
                 return;
             }
-          }
-//        } else if ("/superAdminLogin".equals(request.getRequestURI())  && SecurityContextHolder.getContext().getAuthentication() == null)  {
-//            try {
-//                // Authenticate the super admin using a key
-//                Authentication authentication = authenticationManager.authenticate(
-//                        new UsernamePasswordAuthenticationToken(request.getParameter("superAdminKey"), null));
-//                SecurityContextHolder.getContext().setAuthentication(authentication);
-//            } catch (AuthenticationException e) {
-//                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Super admin authentication failed");
-//                return;
-//            }
-//        }
+        } else if ("/superAdminLogin".equals(request.getRequestURI())  && SecurityContextHolder.getContext().getAuthentication() == null)  {
+            String providedKey = request.getParameter("superAdminKey");
+            if (providedKey != null && providedKey.equals(superAdminKey)) {
+                // Load super admin user details using DefaultUserService
+				UserDetails userDetails = userService.loadUserByUsername(providedKey);
+				// Create authentication token
+				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+				// Set authentication in SecurityContextHolder
+				SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        }
         String tokenFromCookie = extractTokenFromCookie(request);
         if (tokenFromCookie != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails tokenDetails = userService.loadUserByUsername(jwtValidator.extractUsername(tokenFromCookie));
+            System.out.println("User Details: " + tokenDetails);
+            System.out.println("Validation: " + jwtValidator.validateToken(tokenFromCookie, tokenDetails));
             if (jwtValidator.validateToken(tokenFromCookie, tokenDetails)) {
                 UsernamePasswordAuthenticationToken authentication = jwtValidator.getAuthenticationToken(
                         tokenFromCookie, SecurityContextHolder.getContext().getAuthentication(), tokenDetails);
+                System.out.println(authentication);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -129,5 +134,3 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-
-

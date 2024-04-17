@@ -159,7 +159,7 @@ public class SuperAdminController {
             try {
                 // Parse the token to extract claims
                 Claims claims = Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token).getBody();
-                
+                log.info("Claims: {}", claims);
                 // Check if the token contains the "role" claim and its value is "ROLE_ADMIN"
                 if (claims.containsKey("role")) {
                     String role = (String) claims.get("role");
@@ -174,6 +174,7 @@ public class SuperAdminController {
         }
         return false;
     }
+    
     @GetMapping("/home")
     @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ModelAndView goToSuperAdminHomePage(HttpServletRequest request, HttpServletResponse response) {
@@ -181,6 +182,7 @@ public class SuperAdminController {
         ModelAndView mv = new ModelAndView();
         
         // Check if the user is authorized
+        log.info("Is Super Admin: {}", isSuperAdmin(request));
         if (!isSuperAdmin(request)) {
             // Invalidate session and clear tokens
             request.getSession().invalidate();
@@ -211,7 +213,7 @@ public class SuperAdminController {
     }
     
 	@GetMapping("/createAdmin")
-    @PreAuthorize("hasAuthority('ROLE_ROLE_SUPERADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
 	public ModelAndView goToCreateAdminPage(HttpServletRequest request, HttpServletResponse response) {
 		log.info("Entered into the /createAdmin request");
 		ModelAndView mv = new ModelAndView();
@@ -229,7 +231,7 @@ public class SuperAdminController {
 	}
     
 	@PostMapping("/registerAdmin")
-	@PreAuthorize("hasAuthority('ROLE_ROLE_SUPERADMIN')")
+	@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
 	public ModelAndView createAdmin(@RequestParam String name,
 	                                @RequestParam String username,
 	                                @RequestParam String password,
@@ -294,7 +296,7 @@ public class SuperAdminController {
 	}
 
     @GetMapping("/getAllAdmins")
-    @PreAuthorize("hasAuthority('ROLE_ROLE_SUPERADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ModelAndView getAllAdmins(@RequestParam(defaultValue = "0") int page,
                                     @RequestParam(defaultValue = "5") int size,
                                     HttpServletRequest request, 
@@ -315,6 +317,7 @@ public class SuperAdminController {
     }
     
     @GetMapping("/filter")
+    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ModelAndView filterAdmins(@RequestParam("searchType") String searchType, 
                                      @RequestParam("searchTerm") String searchTerm,
                                      @RequestParam(defaultValue = "0") int page,
@@ -349,7 +352,7 @@ public class SuperAdminController {
     }
     
     @GetMapping("/editAdmin/{adminId}")
-    @PreAuthorize("hasAuthority('ROLE_ROLE_SUPERADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ModelAndView goToUpdateAdminPage(@PathVariable ObjectId adminId, HttpServletRequest request, HttpServletResponse response) {
         log.info("Entered into the /editAdmin/{adminId} request for adminId: {}", adminId);
         ModelAndView mv = new ModelAndView();
@@ -385,7 +388,7 @@ public class SuperAdminController {
     }
     
     @PutMapping("/updateAdmin/{adminId}")
-    @PreAuthorize("hasAuthority('ROLE_ROLE_SUPERADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ModelAndView updateAdmin(@PathVariable ObjectId adminId,
             @RequestParam String name,
             @RequestParam String username,
@@ -460,7 +463,7 @@ public class SuperAdminController {
     }
 
     @DeleteMapping("/deleteAdmin/{adminId}")
-    @PreAuthorize("hasAuthority('ROLE_ROLE_SUPERADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ModelAndView deleteAdmin(@PathVariable ObjectId adminId,
                                     HttpServletRequest request,
                                     HttpServletResponse response,
